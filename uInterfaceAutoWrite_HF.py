@@ -15,7 +15,7 @@ import numpy as np
 class Form(QtWidgets.QDialog):
     def __init__(self, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
-        self.ui = uic.loadUi("rfidFastWrite.ui", self)
+        self.ui = uic.loadUi("uInterfaceAutoWrite_HF.ui", self)
         self.ui.show()
         initialButtonDisable(self, 'init')
         initialTableWideget(self.ui.tableWidget.horizontalHeader())
@@ -117,7 +117,6 @@ class MyThread(threading.Thread):
         w.ui.tableWidget.setRowCount(0)
         teachingCountFlag = [False, False]
         rfidAntennaConnectedStatus = [False, False]
-
 
         while True:
             # sleep 'n'second before next polling
@@ -349,27 +348,14 @@ def makingTwoDimentionList(n1, n2):
 def rfidCommand(command, settingCmdbuffer_dict):
     if command == 'idle' :
         settingCmdbuffer_dict["commandCode"] = 0x0000
-    elif command == 'inventory' :
-        settingCmdbuffer_dict["commandCode"] = 0x0001
-        settingCmdbuffer_dict["startAddress"] = 1
-    elif command == 'reset' :
-        settingCmdbuffer_dict["commandCode"] = 0x8000
-    elif command == 'readEpc' :
-        settingCmdbuffer_dict["commandCode"] = 0x0002
-        settingCmdbuffer_dict["startAddress"] = 0
-        settingCmdbuffer_dict["MemoryArea"] = 0
-    elif command == 'readLeak' :
-        settingCmdbuffer_dict["commandCode"] = 0x0002
-        settingCmdbuffer_dict["startAddress"] = 22
-        settingCmdbuffer_dict["length"] = 2
-        settingCmdbuffer_dict["MemoryArea"] = 0
-        settingCmdbuffer_dict["lengthOfUidEpc"] = 2
     elif command == 'write' :
         settingCmdbuffer_dict["commandCode"] = 0x0004
         settingCmdbuffer_dict["startAddress"] = 0
         settingCmdbuffer_dict["length"] = 2
-        settingCmdbuffer_dict["MemoryArea"] = 1
-        settingCmdbuffer_dict["lengthOfUidEpc"] = 1
+    elif command == 'read' :
+        settingCmdbuffer_dict["commandCode"] = 0x0002
+        settingCmdbuffer_dict["startAddress"] = 0
+        settingCmdbuffer_dict["length"] = 100
 
 
     settingCmdbuffer_dict["commandTimeout"] = int(w.ui.lineEdit_10.text())
