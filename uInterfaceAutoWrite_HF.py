@@ -17,14 +17,12 @@ class Form(QtWidgets.QDialog):
         QtWidgets.QDialog.__init__(self, parent)
         self.ui = uic.loadUi("uInterfaceAutoWrite_HF.ui", self)
         self.ui.show()
-        initialButtonDisable(self, 'init')
-        initialTableWideget(self.ui.tableWidget.horizontalHeader())
+
         global alarmClear
         global allTagEpcInfoTotal
         allTagEpcInfoTotal = []
         global iWriteEpcCount
         iWriteEpcCount = 1
-        self.ui.pushButton_5.clicked.connect(self.stopBtn)
 
     def stopBtn(self):
         global iWriteEpcCount
@@ -48,20 +46,16 @@ class Form(QtWidgets.QDialog):
             self.ui.label.setText("Thread Fail")
         else:
             self.ui.label.setText("Trying to Connect")
-            initialButtonDisable(self, 'connect')
-            self.ui.label_14.setText(str(iWriteEpcCount))
 
     @pyqtSlot()
     def slot_2(self):
         global stop
         stop = True
         self.ui.label.setText("Disconnected")
-        initialButtonDisable(self, 'init')
 
     @pyqtSlot()
     def slot_3(self):
         self.ui.label.setText("Searching")
-        initialButtonDisable(self, 'searching')
         self.ui.tableWidget.setRowCount(0)
         global allTagEpcInfo, allTagEpcInfoBuffer, iterationTeaching, iterationMonitoring
         allTagEpcInfo, allTagEpcInfoBuffer = [[], []], [[], []]
@@ -114,23 +108,19 @@ class MyThread(threading.Thread):
         settingCmdbuffer_dict =  {"commandCode": 0, "loopCounter" : 0, "MemoryArea": 0, "startAddress": 0,
         "length" : 0, "lengthOfUidEpc" : 0, "headAddress" : 0, "commandTimeout" : 0,
         "readFragmentNo" : 0, "writeFragmentNo" : 0}
-        w.ui.tableWidget.setRowCount(0)
         teachingCountFlag = [False, False]
         rfidAntennaConnectedStatus = [False, False]
+        tagPresentBuffer = "False"
+        tagTrigger = "False"
 
         while True:
             # sleep 'n'second before next polling
             time_interval = int(self.sampling_time)/1000
             time.sleep(time_interval)
             if stop == True:
-                print("Communication Disconnected!")
+                w.ui.label.setText("Disconnected!")
                 connection.close()
                 break
-
-            if w.ui.pushButton_7.isChecked() :
-                w.ui.label.setText("Stop")
-                w.ui.pushButton_7.setChecked(False)
-                w.ui.pushButton.setDisabled(False)
 
             if not connection.connect():
                 errString = "Connection Error, Check Your Input Information"
@@ -139,185 +129,96 @@ class MyThread(threading.Thread):
                 w.ui.label.setText(errString)
                 break
             else:
-                if rTrigTeachingBtn :
-                    rTrigTeachingBtn = False
-                    w.ui.label.setText("Connected")
-                    w.ui.pushButton.setDisabled(False)
                 try:
+                    w.ui.label.setText("connected")
                     input_buffer_regs = [connection.read_input_registers(0, 76).registers,\
                      connection.read_input_registers(76, 76).registers]
                 except:
                     print("Error occur while communication.")
                 else:
                     rfidChannelInput_dict = [rfidChannelInput(input_buffer_regs[0]), rfidChannelInput(input_buffer_regs[1])]
-                    # Operating mode 0xB000 0xB012 check and setting to UHF Extended mode
 
-                    if rfidAntennaConnectedStatus[0] != rfidChannelInput_dict[0]["notConnected"] \
-                        or rfidAntennaConnectedStatus[1] != rfidChannelInput_dict[1]["notConnected"] :
-                        rfidAntennaConnected(rfidChannelInput_dict[0]["notConnected"], rfidChannelInput_dict[1]["notConnected"])
-                        rfidAntennaConnectedStatus[0] = rfidChannelInput_dict[0]["notConnected"]
-                        rfidAntennaConnectedStatus[1] = rfidChannelInput_dict[1]["notConnected"]
+                    tagPresent = rfidChannelInput_dict[0]["tagPresent"]
+                    if tagPresent != tagPresentBuffer:
+                        tagPresentBuffer = tagPresent
+                        tagTrigger = "True"
 
-                    anotherChannel = 1 if channel == 0 else 0
+                    # print(list(map(type,(tagPresent, tagPresentBuffer, tagTrigger))))
 
-                    if not(w.ui.pushButton_6.isChecked()) :
-                        if w.ui.label.text() == 'Searching' :
-                            caseStep = 0 if caseStep > 10 else caseStep
+                    if caseStep == 0 :
+                        w.ui.label_8.setText("write ready")
+                        if rfidChannelInput_dict[channel]["responseCode"] == 0x0000 :
+                            # TP 트리거 기능 삽입
+                            if tagTrigger == "True" and tagPresent == "True":
+                                now = datetime.datetime.now()
+                                nowDate = list(map(int, str(now.date()).split('-')[1:]))
+                                nowTime = list(map(int, (str(now.time())[:8]).split(':')))
+                                nowRfidData = nowDate + nowTime
+                                byteListForWrite = nowRfidData
 
-                            if caseStep == 0 :
-                                if rfidChannelInput_dict[channel]["responseCode"] == 0x0000 :
-                                    connection.write_registers(rfidChannelModbus[channel], rfidCommand('inventory', settingCmdbuffer_dict))
-                                    print("Inventory start")
-                                    if channel == 0 :
-                                        w.ui.label_19.setText("Inventory")
-                                    else :
-                                        w.ui.label_20.setText("Inventory")
-                                    caseStep = 1
-                                else :
-                                    if channel == 0 :
-                                        w.ui.label_19.setText("Reset")
-                                    else :
-                                        w.ui.label_20.setText("Reset")
-                                    connection.write_registers(rfidChannelModbus[channel], rfidCommand('reset', settingCmdbuffer_dict))
-                                    print("Ready to idle")
+                                connection.write_registers(rfidOutputBufferModbus[channel], rfidOutputByteToWord(byteListForWrite))
+                                connection.write_registers(rfidChannelModbus[channel], rfidCommand('write', settingCmdbuffer_dict))
+                                print("write start")
+                                w.ui.label_19.setText("write start")
+                                w.ui.lineEdit_2.setText(str(byteListForWrite))
+                                caseStep = 1
 
-                            if caseStep == 1 :
-                                if rfidChannelInput_dict[channel]["responseCode"] == 0x8001:
-                                    if channel == 0 :
-                                        w.ui.label_19.setText("Inventory Busy")
-                                    else :
-                                        w.ui.label_20.setText("Inventory Busy")
-                                    time.sleep(0.1)
-                                elif rfidChannelInput_dict[channel]["responseCode"] == 0x0000:
-                                    if channel == 0 :
-                                        w.ui.label_19.setText("Idle")
-                                    else :
-                                        w.ui.label_20.setText("Idle")
-                                    time.sleep(0.1)
-                                else:
+                    if caseStep == 1 :
+                        w.ui.label_8.setText("after write command")
+                        if rfidChannelInput_dict[channel]["responseCode"] == 0x8004:
+                            w.ui.label_19.setText("write Busy")
+                            time.sleep(0.1)
+                        elif rfidChannelInput_dict[channel]["responseCode"] == 0x0000:
+                            w.ui.label_19.setText("idle")
+                            time.sleep(0.1)
+                        else:
+                            if rfidChannelInput_dict[channel]["responseCode"] == 0x0004 :
+                                w.ui.label_19.setText("Write Done")
+                                caseStep = 2
+                            else:
+                                w.ui.label_19.setText("Write Error")
+                                caseStep = 0
 
-                                    if rfidChannelInput_dict[channel]["responseCode"] == 0x0001 :
-                                        if channel == 0 :
-                                            w.ui.label_19.setText("Inventory Done")
-                                        else :
-                                            w.ui.label_20.setText("Inventory Done")
-                                        print("rfidChannelInput_dict[channel]", rfidChannelInput_dict[channel])
-                                        readFragmentNo = rfidChannelInput_dict[channel]["readFragmentNo"]
-                                        inputBuffer = rfidChannelInput_dict[channel]["inputBuffer"]
-                                        print("Inventory Successed!!")
+                            connection.write_registers(rfidChannelModbus[channel], rfidCommand('idle', settingCmdbuffer_dict))
+                            time.sleep(0.1)
 
-                                        print("readFragmentNo", readFragmentNo)
-                                        if readFragmentNo > 0 :
-                                            inputBufferAll.append(inputBuffer)
-                                            settingCmdbuffer_dict["readFragmentNo"] = readFragmentNo
-                                            connection.write_registers(rfidChannelModbus[channel], rfidCommand('inventory', settingCmdbuffer_dict))
-                                        else :
-                                            settingCmdbuffer_dict["readFragmentNo"] = 0
-                                            inputBufferAll.append(inputBuffer)
-                                            inputAll = (np.array(inputBufferAll)).flatten()
-                                            tagDataLength, tagStartAddress, tagEndAddress, tagCount, previousTagNum = 0,0,0,0,0
-                                            isUniqueTag = False
-                                            rowIndex = 0
-                                            w.ui.tableWidget.setRowCount(0)
-                                            firstNumList = []
+                    elif caseStep == 2 :
+                        w.ui.label_8.setText("read ready")
+                        if rfidChannelInput_dict[channel]["responseCode"] == 0x0000 :
+                            connection.write_registers(rfidChannelModbus[channel], rfidCommand('read', settingCmdbuffer_dict))
+                            time.sleep(0.1)
+                            caseStep = 3
+                        else :
+                            w.ui.label_19.setText("Reset")
+                            connection.write_registers(rfidChannelModbus[channel], rfidCommand('reset', settingCmdbuffer_dict))
+                            print("Ready to idle")
 
-                                            while True :
-                                                tagDataLength = inputAll[previousTagNum]
-                                                # allTagEpcInfo[channel] = []
-                                                if tagDataLength != 0 :
-                                                    tagStartAddress = previousTagNum + 2
-                                                    tagEndAddress = tagStartAddress + tagDataLength
-                                                    tagUnionNum = inputAll[tagStartAddress]
-                                                    tagEpcNum = inputAll[tagStartAddress + 1]
-                                                    tagEpcLength = tagStartAddress+12
+                    elif caseStep == 3 :
+                        w.ui.label_8.setText("after read command")
+                        if rfidChannelInput_dict[channel]["responseCode"] == 0x8002:
+                            w.ui.label_19.setText("read Busy")
+                            time.sleep(0.1)
+                        elif rfidChannelInput_dict[channel]["responseCode"] == 0x0000:
+                            w.ui.label_19.setText("idle")
+                            time.sleep(0.1)
+                        else:
+                            if rfidChannelInput_dict[channel]["responseCode"] == 0x0002 :
+                                readData = rfidChannelInput_dict[channel]["inputBuffer"]
+                                readDataInfo = str(readData[0:5])
 
-                                                    rowCount = w.ui.tableWidget.rowCount()
-                                                    w.ui.tableWidget.insertRow(rowCount)
-                                                    w.ui.tableWidget.setItem(rowCount, 0, QtWidgets.QTableWidgetItem(str(tagUnionNum)))
-                                                    w.ui.tableWidget.setItem(rowCount, 1, QtWidgets.QTableWidgetItem(str(tagEpcNum)))
+                                w.ui.lineEdit_4.setText(readDataInfo)
+                                w.ui.label_19.setText("read Done")
+                                tagTrigger = False
 
-                                                    if w.ui.checkBox.isChecked() :
-                                                        if tagUnionNum == int(w.ui.lineEdit_9.text()) :
-                                                            isUniqueTag = True
-                                                    else:
-                                                        if tagUnionNum != int(w.ui.lineEdit_11.text()) :
-                                                            firstNumList.append(tagUnionNum)
+                                with open('history.csv', 'a') as f:
+                                    f.write(str(datetime.datetime.now()) + ',' + readDataInfo + '\n')
 
-                                                    print("Uion Number : " + str(tagUnionNum) + ", Idenfication : " + str(tagEpcNum))
-                                                    print("Tag EPC : " + str(inputAll[tagStartAddress:tagEpcLength]))
-                                                    print(inputAll[tagStartAddress:tagEpcLength])
-                                                    allTagEpcInfo[channel].append(inputAll[tagStartAddress:tagEpcLength])
-                                                    print(inputAll[tagStartAddress:tagEndAddress])
-                                                    previousTagNum = tagEndAddress
-                                                else :
-                                                    print("Inventory done")
-                                                    break
-                                            inputBufferAll = []
-                                            connection.write_registers(rfidChannelModbus[channel], rfidCommand('idle', settingCmdbuffer_dict))
-
-
-                                            if (w.ui.checkBox.isChecked() and isUniqueTag) \
-                                                or firstNumList :
-                                                caseStep = 2
-                                            else:
-                                                caseStep = 0
-                                                # channel = 1 if channel == 0 else 0
-
-                                    else:
-                                        w.ui.tableWidget.setRowCount(0)
-                                        print("Inventory failed!!")
-                                        print("responseCode : " + str(rfidChannelInput_dict[channel]["responseCode"]))
-                                        if channel == 0 :
-                                            w.ui.label_19.setText("Inventory Fail")
-                                        else :
-                                            w.ui.label_20.setText("Inventory Fail")
-
-                                        inputBufferAll = []
-                                        connection.write_registers(rfidChannelModbus[channel], rfidCommand('idle', settingCmdbuffer_dict))
-                                        caseStep = 0
-                                        # channel = 1 if channel == 0 else 0
-
-                            elif caseStep == 2 :
-
-                                isUniqueTag = False
-                                if rfidChannelInput_dict[channel]["responseCode"] == 0x0000 :
-                                    global iWriteEpcCount
-                                    print(iWriteEpcCount)
-
-                                    if firstNumList :
-                                        byteListForWrite =[int(firstNumList[0]), int(w.ui.lineEdit_11.text()), iWriteEpcCount, 0]
-                                    else:
-                                        byteListForWrite =[int(w.ui.lineEdit_9.text()), int(w.ui.lineEdit_11.text()), iWriteEpcCount, 0]
-
-                                    connection.write_registers(rfidOutputBufferModbus[channel], rfidOutputByteToWord(byteListForWrite))
-                                    connection.write_registers(rfidChannelModbus[channel], rfidCommand('write', settingCmdbuffer_dict))
-                                    print("write start")
-                                    if channel == 0 :
-                                        w.ui.label_19.setText("write")
-                                    else :
-                                        w.ui.label_20.setText("write")
-                                    caseStep = 3
-                                else :
-                                    if channel == 0 :
-                                        w.ui.label_19.setText("Reset")
-                                    else :
-                                        w.ui.label_20.setText("Reset")
-                                    connection.write_registers(rfidChannelModbus[channel], rfidCommand('reset', settingCmdbuffer_dict))
-                                    print("Ready to idle")
-
-                            elif caseStep == 3 :
-                                if rfidChannelInput_dict[channel]["responseCode"] == 0x8004:
-                                    print("write Busy")
-                                else:
-                                    if rfidChannelInput_dict[channel]["responseCode"] == 0x0004:
-                                        print("Write SCSS")
-                                        if w.ui.checkBox_2.isChecked():
-                                            iWriteEpcCount = iWriteEpcCount + 1
-                                        w.ui.label_14.setText(str(iWriteEpcCount))
-                                    else:
-                                        print("Write Err")
-                                    caseStep = 0
-                                    # channel = 1 if channel == 0 else 0
+                                caseStep = 0
+                            else:
+                                w.ui.label_19.setText("Read Error")
+                                caseStep = 2
+                            connection.write_registers(rfidChannelModbus[channel], rfidCommand('idle', settingCmdbuffer_dict))
+                            time.sleep(0.1)
 
 
 def rfidAntennaConnected(bool1, bool2):
@@ -351,14 +252,13 @@ def rfidCommand(command, settingCmdbuffer_dict):
     elif command == 'write' :
         settingCmdbuffer_dict["commandCode"] = 0x0004
         settingCmdbuffer_dict["startAddress"] = 0
-        settingCmdbuffer_dict["length"] = 2
+        settingCmdbuffer_dict["length"] = 100
     elif command == 'read' :
         settingCmdbuffer_dict["commandCode"] = 0x0002
         settingCmdbuffer_dict["startAddress"] = 0
         settingCmdbuffer_dict["length"] = 100
 
 
-    settingCmdbuffer_dict["commandTimeout"] = int(w.ui.lineEdit_10.text())
     rfidChannelOutput_dict = rfidChannelOutput(list(settingCmdbuffer_dict.values()))
     controlStatusList = list(rfidChannelOutput_dict.values())
     time.sleep(0.1)
@@ -469,19 +369,13 @@ def initialButtonDisable(pre, mode):
     print("initialButtonDisable")
     if mode == 'init':
         pre.ui.lineEdit.setDisabled(False)
-        pre.ui.pushButton.setDisabled(True)
         pre.ui.pushButton_2.setDisabled(True)
         pre.ui.pushButton_3.setDisabled(False)
-        pre.ui.pushButton_6.setDisabled(True)
-        pre.ui.pushButton_7.setDisabled(True)
     elif mode =='connect':
         pre.ui.pushButton_3.setDisabled(True)
         pre.ui.pushButton_2.setDisabled(False)
-        pre.ui.pushButton_6.setDisabled(False)
-        pre.ui.pushButton_7.setDisabled(False)
     elif mode =='searching':
         pre.ui.pushButton.setDisabled(True)
-
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
