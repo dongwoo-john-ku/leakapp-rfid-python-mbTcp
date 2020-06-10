@@ -120,10 +120,20 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QLabel" name="label_21">
+         <property name="text">
+          <string>TP Status</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
      <item row="0" column="0" rowspan="2">
-      <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0,0">
+      <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0,0,0">
        <property name="spacing">
         <number>20</number>
        </property>
@@ -153,7 +163,7 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0" colspan="6">
+       <item row="3" column="0" colspan="7">
         <widget class="QLabel" name="label_7">
          <property name="font">
           <font>
@@ -170,7 +180,7 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="2" colspan="4">
+       <item row="4" column="2" colspan="5">
         <widget class="Line" name="line_7">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -187,25 +197,6 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="4">
-        <widget class="QPushButton" name="pushButton_2">
-         <property name="minimumSize">
-          <size>
-           <width>130</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>130</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Disconnect</string>
-         </property>
-        </widget>
-       </item>
        <item row="6" column="1">
         <widget class="QLineEdit" name="lineEdit_3">
          <property name="text">
@@ -213,28 +204,6 @@
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="4">
-        <widget class="QPushButton" name="pushButton_3">
-         <property name="minimumSize">
-          <size>
-           <width>130</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>130</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="mouseTracking">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Connect</string>
          </property>
         </widget>
        </item>
@@ -255,6 +224,69 @@
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="4">
+        <widget class="QPushButton" name="pushButton_2">
+         <property name="minimumSize">
+          <size>
+           <width>130</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>130</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Disconnect</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="5">
+        <widget class="QPushButton" name="pushButton_4">
+         <property name="minimumSize">
+          <size>
+           <width>130</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>130</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="mouseTracking">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Step Reset</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="3">
+        <widget class="QPushButton" name="pushButton_3">
+         <property name="minimumSize">
+          <size>
+           <width>130</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>130</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="mouseTracking">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Connect</string>
          </property>
         </widget>
        </item>
@@ -279,6 +311,47 @@
     </widget>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLabel" name="label_10">
+       <property name="text">
+        <string>Write Started Time:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>-</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_13">
+       <property name="text">
+        <string>Write Finished Time:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_14">
+       <property name="text">
+        <string>-</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QLineEdit" name="lineEdit_2">
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -300,6 +373,47 @@
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QLabel" name="label_15">
+       <property name="text">
+        <string>Read Started Time:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_16">
+       <property name="text">
+        <string>-</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_18">
+       <property name="text">
+        <string>Read Finished Time:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_20">
+       <property name="text">
+        <string>-</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="QLineEdit" name="lineEdit_4">
@@ -326,7 +440,7 @@
    <slot>slot_2()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>777</x>
+     <x>766</x>
      <y>110</y>
     </hint>
     <hint type="destinationlabel">
@@ -342,12 +456,28 @@
    <slot>slot_1()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>618</x>
+     <x>616</x>
      <y>110</y>
     </hint>
     <hint type="destinationlabel">
      <x>92</x>
      <y>419</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_4</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>slot_3()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>582</x>
+     <y>150</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>795</x>
+     <y>393</y>
     </hint>
    </hints>
   </connection>

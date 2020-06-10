@@ -8,9 +8,7 @@ from PyQt5.QtWidgets import QMessageBox
 from pymodbus.client.sync import ModbusTcpClient
 
 import time, datetime, threading, os
-from time import gmtime, strftime
-import pandas as pd
-import numpy as np
+
 
 class Form(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -37,6 +35,10 @@ class Form(QtWidgets.QDialog):
 
         global stop
         stop = False
+
+        global stepReset
+        stepReset = False
+
         t = MyThread(sampling_time, ip_address)
 
         try:
@@ -55,36 +57,9 @@ class Form(QtWidgets.QDialog):
 
     @pyqtSlot()
     def slot_3(self):
-        self.ui.label.setText("Searching")
-        self.ui.tableWidget.setRowCount(0)
-        global allTagEpcInfo, allTagEpcInfoBuffer, iterationTeaching, iterationMonitoring
-        allTagEpcInfo, allTagEpcInfoBuffer = [[], []], [[], []]
-        iterationTeaching, iterationMonitoring = 0, 0
-        self.ui.label_8.setText(str(iterationTeaching)), self.ui.label_18.setText(str(iterationTeaching))
-        global allTagEpcInfoTotal
-        allTagEpcInfoTotal = []
-
-    @pyqtSlot()
-    def slot_4(self):
-        self.ui.label.setText("Writing")
-        initialButtonDisable(self, 'writing')
-
-    @pyqtSlot()
-    def slot_5(self):
-        self.ui.label.setText("Monitoring")
-        initialButtonDisable(self, 'monitoring')
-
-    @pyqtSlot()
-    def slot_6(self): #Pouse Condition
-        if self.ui.pushButton_6.isChecked() :
-            print(self.ui.pushButton_6.isChecked())
-        else :
-            print(self.ui.pushButton_6.isChecked())
-
-    @pyqtSlot()
-    def slot_7(self):
-        alarmClear = True
-        print("Alarm Clear", alarmClear)
+        self.ui.label.setText("Step Init")
+        global stepReset
+        stepReset = True
 
 class MyThread(threading.Thread):
     def __init__(self, Sampling_time, ip_address):
@@ -122,6 +97,17 @@ class MyThread(threading.Thread):
                 connection.close()
                 break
 
+            global stepReset
+            if stepReset == True:
+                caseStep = 0
+                stepReset = False
+                w.ui.label_11.setText('-')
+                w.ui.label_14.setText('-')
+                w.ui.label_16.setText('-')
+                w.ui.label_20.setText('-')
+                w.ui.lineEdit_2.setText('')
+                w.ui.lineEdit_4.setText('')
+
             if not connection.connect():
                 errString = "Connection Error, Check Your Input Information"
                 print(errString)
@@ -143,7 +129,14 @@ class MyThread(threading.Thread):
                         tagPresentBuffer = tagPresent
                         tagTrigger = "True"
 
+                    if tagPresent == "True":
+                        w.ui.label_21.setStyleSheet("color: green;" "background-color: #7FFFD4")
+                    else:
+                        w.ui.label_21.setStyleSheet("color: grey;" "border-style: solid")
+
                     # print(list(map(type,(tagPresent, tagPresentBuffer, tagTrigger))))
+
+
 
                     if caseStep == 0 :
                         w.ui.label_8.setText("write ready")
@@ -161,6 +154,7 @@ class MyThread(threading.Thread):
                                 print("write start")
                                 w.ui.label_19.setText("write start")
                                 w.ui.lineEdit_2.setText(str(byteListForWrite))
+                                w.ui.label_11.setText(str(datetime.datetime.now()))
                                 caseStep = 1
 
                     if caseStep == 1 :
@@ -174,6 +168,7 @@ class MyThread(threading.Thread):
                         else:
                             if rfidChannelInput_dict[channel]["responseCode"] == 0x0004 :
                                 w.ui.label_19.setText("Write Done")
+                                w.ui.label_14.setText(str(datetime.datetime.now()))
                                 caseStep = 2
                             else:
                                 w.ui.label_19.setText("Write Error")
@@ -186,6 +181,7 @@ class MyThread(threading.Thread):
                         w.ui.label_8.setText("read ready")
                         if rfidChannelInput_dict[channel]["responseCode"] == 0x0000 :
                             connection.write_registers(rfidChannelModbus[channel], rfidCommand('read', settingCmdbuffer_dict))
+                            w.ui.label_16.setText(str(datetime.datetime.now()))
                             time.sleep(0.1)
                             caseStep = 3
                         else :
@@ -203,6 +199,7 @@ class MyThread(threading.Thread):
                             time.sleep(0.1)
                         else:
                             if rfidChannelInput_dict[channel]["responseCode"] == 0x0002 :
+                                w.ui.label_20.setText(str(datetime.datetime.now()))
                                 readData = rfidChannelInput_dict[channel]["inputBuffer"]
                                 readDataInfo = str(readData[0:5])
 
