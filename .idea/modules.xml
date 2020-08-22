@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/leakapp-rfid-python-mbTcp.iml" filepath="$PROJECT_DIR$/.idea/leakapp-rfid-python-mbTcp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/uinterface-rfid-python-mbTcp.iml" filepath="$PROJECT_DIR$/.idea/uinterface-rfid-python-mbTcp.iml" />
     </modules>
   </component>
 </project>
